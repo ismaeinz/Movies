@@ -26,7 +26,7 @@ class MoviListRepositoryImpl @Inject constructor(
             val localMovieList =
                 movieDatabase.movieDao.getMovieByCategory(category)
 
-            val shouldLoadLocalMovie = localMovieList.isEmpty()
+            val shouldLoadLocalMovie = localMovieList.isNotEmpty()
                     && !forcedFetchFromRemote
             if (shouldLoadLocalMovie) {
                 emit(
@@ -56,13 +56,25 @@ class MoviListRepositoryImpl @Inject constructor(
                 }
             movieDatabase.movieDao.upsertMovieList(movieEntities)
             emit(Resource.Success(
-                movieEntities.map {  }
+                movieEntities.map { it.toMovie(category) }
             ))
+            emit(Resource.Loading(false))
         }
     }
 
     override suspend fun getMovie(id: Int): Flow<Resource<Movie>> {
-        TODO("Not yet implemented")
+        return flow {
+            emit(Resource.Loading(true))
+            val movieEntity = movieDatabase.movieDao.getMovieById(id)
+            if (movieEntity != null) {
+                emit(Resource.Success(movieEntity.toMovie(movieEntity.category)))
+                emit(Resource.Loading(false))
+                return@flow
+            }
+            emit(Resource.Error("Error mo such movie"))
+            emit(Resource.Loading(false))
+
+        }
     }
 
 }
