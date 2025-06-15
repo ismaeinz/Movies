@@ -1,5 +1,6 @@
 package com.example.movies.app.presnention.views
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.movies.app.domain.repository.MovieListRepository
@@ -24,6 +25,8 @@ class MovieListViewModel @Inject constructor(
     init {
         getPopularMovieList(forceFetchFromRemote = false)
         getUpcomingMovieList(forceFetchFromRemote = false)
+        Log.d("tesx,", movieListState.value.popularMovieList.count().toString())
+
     }
 
     fun onEvent(event: MovieListUiEvent) {
@@ -53,8 +56,8 @@ class MovieListViewModel @Inject constructor(
             }
             movieListRepository.getMovieList(
                 forceFetchFromRemote,
-                category = Category.POPULAR,
-                page = movieListState.value.popularMovieListPage,
+                Category.POPULAR,
+                movieListState.value.popularMovieListPage,
             ).collectLatest { result ->
                 when (result) {
                     is Resource.Error<*> -> {
