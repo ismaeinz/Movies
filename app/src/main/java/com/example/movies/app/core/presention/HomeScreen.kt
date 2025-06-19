@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -34,9 +35,9 @@ import com.example.movies.app.util.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavHostController) {
     val movieListViewModel = hiltViewModel<MovieListViewModel>()
-    val movieState = movieListViewModel.movieListState.collectAsState().value
+    val movieListState = movieListViewModel.movieListState.collectAsState().value
     val bottomNavController = rememberNavController()
 
     Scaffold(bottomBar = {
@@ -47,7 +48,7 @@ fun HomeScreen(navController: NavController) {
         TopAppBar(
             title = {
                 Text(
-                    if (movieState.isCurrentPopularScreen) "Popular"
+                    if (movieListState.isCurrentPopularScreen) "Popular"
                     else "Upcoming "
                 )
             }, modifier = Modifier.shadow(2.dp)
@@ -61,10 +62,18 @@ fun HomeScreen(navController: NavController) {
                 startDestination = Screen.PopularMovieList.route
             ) {
                 composable(Screen.PopularMovieList.route) {
-                    PopularMovieScreen(movieListState = movieState)
+                    PopularMovieScreen(
+                        movieListState = movieListState,
+                        navController = navController,
+                        onEvent = movieListViewModel::onEvent
+                    )
                 }
-                composable(Screen.PopularMovieList.route) {
-                    UpcomingMovieScreen()
+                composable(Screen.UpcomingMovieList.route) {
+                    UpcomingMovieScreen(
+                        movieListState = movieListState,
+                        navController = navController,
+                        onEvent = movieListViewModel::onEvent
+                    )
                 }
             }
         }
@@ -82,7 +91,7 @@ fun BottomNavigationBar(
             title = "Upcoming", icon = Icons.Rounded.Upcoming
         )
     )
-    val selected = rememberSaveable {
+    var selected = rememberSaveable {
         mutableIntStateOf(0)
     }
     NavigationBar {
@@ -90,8 +99,9 @@ fun BottomNavigationBar(
             modifier = Modifier.background(MaterialTheme.colorScheme.inversePrimary)
         ) {
             items.forEachIndexed { index, bottomItem ->
-                NavigationBarItem(selected = selected.intValue == index, onClick = {
-                    selected.intValue = index
+                NavigationBarItem(
+                    selected = selected.intValue == index, onClick = {
+                        selected.intValue = index
                     when (selected.intValue) {
                         0 -> {
                             onEvent(MovieListUiEvent.Navigate)
@@ -107,7 +117,9 @@ fun BottomNavigationBar(
                         }
                     }
                 }, icon = {
-                    Icon(imageVector = bottomItem.icon, contentDescription = "")
+                        Icon(
+                            imageVector = bottomItem.icon, contentDescription = ""
+                        )
                 }, label = {
                     Text(bottomItem.title)
                 })
